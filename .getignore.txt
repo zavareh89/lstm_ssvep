@@ -1,4 +1,0 @@
-CCA_accuracy
-CCA_benchmark.m
-CCA_benchmark.tif
-Freq_Phase
