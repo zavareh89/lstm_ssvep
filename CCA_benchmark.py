@@ -68,11 +68,14 @@ labels=np.array(labels)
 
 # preprocessing 
 def preprocess(data,sos,time_window):
-    data = sosfiltfilt(sos,data[:,time_window,:],axis=1,padtype='constant') # bandpass filtering
-    # normalization
-#    mean1=data.mean(axis=1).reshape(data.shape[0],1,-1)
-#    std1=data.std(axis=1).reshape(data.shape[0],1,-1)
-#    data=(data-mean1)/std1              
+    data = sosfiltfilt(sos,data[:,time_window,:],axis=1,padtype='constant') # bandpass filtering             
+    return data
+
+# normalization
+def normalization(data):
+    mean1=data.mean(axis=2,keepdims=True)
+    std1=data.std(axis=2,keepdims=True)
+    data=(data-mean1)/std1              
     return data
 
 time_window = np.arange(fs).astype(dtype=int)
@@ -96,6 +99,7 @@ for i in range(n_targets):
 ro = np.zeros(shape=(n_subjects,n_targets*n_blocks,n_targets))
 correctness_flag = np.zeros(shape=(n_subjects,n_targets*n_blocks)).astype(dtype=bool)
 Acc=np.zeros(shape=(n_subjects,))
+CCA_features = np.zeros(shape=(2*Nh,n_targets,len(time_window),n_subjects*n_targets*n_blocks))
 
 for ii in range(n_subjects):
     k = ii*n_targets*n_blocks
@@ -103,8 +107,10 @@ for ii in range(n_subjects):
         input_data = CCA_input[:,:,k+trial].transpose()
         # apply CCA for each target
         for targ in range(n_targets):
-            Wy,Wx,r = cca(sin_ref[targ],input_data)
+            Wy,Wx,r = cca(sin_ref[targ],input_data,n_components=2*Nh)
             ro[ii,trial,targ] = r[0]
+            # extract CCA features (canonical variables)
+            CCA_features[:,targ,:,k+trial] = np.dot(input_data,Wx).transpose()
             
     # find the predicted labels for subject ii
     predicted_labels = np.argmax(ro[ii,:,:],axis=1)
@@ -115,4 +121,11 @@ for ii in range(n_subjects):
     Acc[ii] = np.sum(correctness_flag[ii,:])/(n_targets*n_blocks)
     print('Subject ' + str(ii+1) + ':' + str(Acc[ii]))
         
-np.mean(Acc)
+print(np.mean(Acc))
+
+
+# normalization
+CCA_features = normalization(CCA_features)
+
+# save CCA_features and Acc
+np.savez_compressed('CCA_benchmark_materials', Acc=Acc, CCA_features=CCA_features)
