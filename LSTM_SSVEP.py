@@ -86,7 +86,10 @@ test_index = np.arange(n_targets*n_blocks*30,n_targets*n_blocks*n_subjects).asty
 # preprocessing 
 def preprocess(data,sos,time_window):
     data = sosfiltfilt(sos,data[:,time_window,:],axis=1,padtype='constant') # bandpass filtering
-    # normalization
+    return data
+
+# normalization
+def normalization(data):
     mean1=data.mean(axis=1).reshape(data.shape[0],1,-1)
     std1=data.std(axis=1).reshape(data.shape[0],1,-1)
     data=(data-mean1)/std1              
@@ -95,10 +98,12 @@ def preprocess(data,sos,time_window):
 time_window = np.arange(fs).astype(dtype=int)
 train_data = All_data[:,:,train_index]
 train_data = preprocess(train_data,sos,time_window)
+train_data = normalization(train_data)
 train_data=np.transpose(train_data,(2,1,0))
 train_labels=OH_labels[train_index]
 test_data = All_data[:,:,test_index]
 test_data = preprocess(test_data,sos,time_window)
+test_data = normalization(test_data)
 test_data=np.transpose(test_data,(2,1,0))
 test_labels=OH_labels[test_index]
 
