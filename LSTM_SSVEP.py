@@ -5,8 +5,8 @@ R_DropOut = [0,0.2,0.5]
 N_Neurons_GRU = [128]
 N_Neurons_Classify = 40
 LearningRate = 0.001
-workspace = r'E:\ehsan\hadi'
-PathData = r'E:\ehsan\hadi\new_reduced_size'
+workspace = '/home/ehsan/hadi'
+PathData = '/home/ehsan/hadi/new_reduced_size'
 Batch_size = [128] 
 Epochs = 25
 #data
@@ -148,7 +148,7 @@ for N_Neuron in N_Neurons_GRU:
                 x_shape_eeg,y_shape_eeg = len(time_window),len(channel_idx)
                 EEG = Input (shape = (x_shape_eeg,y_shape_eeg), name = 'EEG')
                 X1 = GRU(N_Neuron, return_sequences=True, activation=K.tanh)(EEG)
-                X1 = GRU(N_Neuron*2,dropout=DropOut, recurrent_dropout=R_DropOut, return_sequences=False)(X1)
+                X1 = GRU(N_Neuron*2,dropout=DropOut1, recurrent_dropout=R_DropOut1, return_sequences=False)(X1)
                 Y1 = Dense(N_Neurons_Classify, activation='softmax')(X1)
                 ###compile
                 model=Model(EEG,Y1)
