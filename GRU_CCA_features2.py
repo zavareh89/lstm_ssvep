@@ -8,7 +8,7 @@ from scipy.signal import cheby2,sosfiltfilt
 import scipy.io as sio
 from keras import backend as K
 from keras import Input,layers
-from keras.layers import Flatten, Dense,LSTM,GRU,Dropout
+from keras.layers import Flatten, Dense,LSTM,GRU,Dropout,Bidirectional,CuDNNGRU,SimpleRNN
 from keras.optimizers import Adam
 from keras.models import load_model
 from keras.models import Sequential, Model
@@ -103,8 +103,8 @@ for N_Neuron in N_Neurons_GRU:
         ##structure
         x_shape_eeg,y_shape_eeg = 250,1
         EEG = Input (shape = (x_shape_eeg,y_shape_eeg), name = 'EEG')
-        X1 = GRU(N_Neuron, return_sequences=True, activation=K.tanh)(EEG)
-        X1 = GRU(2*N_Neuron,dropout=DropOut, recurrent_dropout=R_DropOut, return_sequences=False)(X1)
+        X1 = CuDNNGRU(N_Neuron, return_sequences=True, activation=K.tanh)(EEG)
+        X1 = CuDNNGRU(2*N_Neuron,dropout=DropOut, recurrent_dropout=R_DropOut, return_sequences=False)(X1)
         Y1 = Dense(N_Neurons_Classify, activation='sigmoid')(X1)
         ###compile
         model=Model(EEG,Y1)
