@@ -1,13 +1,13 @@
 #---------------------------------------------------- PARAMS
 #nn
-DropOut = 0.1
-R_DropOut = 0.2
-N_Neurons_GRU = [256,512]
+DropOut = [0.1,0.2,0.5]
+R_DropOut = [0,0.2,0.5]
+N_Neurons_GRU = [128]
 N_Neurons_Classify = 40
 LearningRate = 0.001
 workspace = r'E:\ehsan\hadi'
 PathData = r'E:\ehsan\hadi\new_reduced_size'
-Batch_size = [64] 
+Batch_size = [128] 
 Epochs = 25
 #data
 n_channels=64 # all channels
@@ -138,41 +138,44 @@ test_labels=OH_labels[test_index]
 
 for N_Neuron in N_Neurons_GRU:
     for bs in Batch_size:
+        for DropOut1 in DropOut:
+            for R_DropOut1 in R_DropOut:
 
-        print('===============start of neurons =',N_Neuron,', batch = ',bs,"===================")
 
-        ##structure
-        x_shape_eeg,y_shape_eeg = len(time_window),len(channel_idx)
-        EEG = Input (shape = (x_shape_eeg,y_shape_eeg), name = 'EEG')
-        X1 = GRU(N_Neuron, return_sequences=True, activation=K.tanh)(EEG)
-        X1 = GRU(N_Neuron*2,dropout=DropOut, recurrent_dropout=R_DropOut, return_sequences=False)(X1)
-        Y1 = Dense(N_Neurons_Classify, activation='softmax')(X1)
-        ###compile
-        model=Model(EEG,Y1)
-        model.summary()
-        model.compile(loss='categorical_crossentropy',metrics=['acc'],
-                      optimizer='adam')
-        ###train
+                print('neurons =',N_Neuron,', DropOut1 = ',DropOut1,',R_DropOut=',R_DropOut1)
 
-        model_dir = os.path.join(workspace, "models", "%ddb Neuron" % int(N_Neuron))
-        create_folder(model_dir)
+                ##structure
+                x_shape_eeg,y_shape_eeg = len(time_window),len(channel_idx)
+                EEG = Input (shape = (x_shape_eeg,y_shape_eeg), name = 'EEG')
+                X1 = GRU(N_Neuron, return_sequences=True, activation=K.tanh)(EEG)
+                X1 = GRU(N_Neuron*2,dropout=DropOut, recurrent_dropout=R_DropOut, return_sequences=False)(X1)
+                Y1 = Dense(N_Neurons_Classify, activation='softmax')(X1)
+                ###compile
+                model=Model(EEG,Y1)
+                model.summary()
+                model.compile(loss='categorical_crossentropy',metrics=['acc'],
+                              optimizer='adam')
+                ###train
 
-        callbacks_list = [keras.callbacks.EarlyStopping(monitor='val_loss',patience=Epochs),
-                    keras.callbacks.ModelCheckpoint(filepath = os.path.join(model_dir, "model.h5")
-                                                    ,monitor='val_loss',save_best_only=True),
-                         keras.callbacks.ReduceLROnPlateau(monitor='val_loss',factor=0.98,patience=2)]
+                model_dir = os.path.join(workspace, "models", "%ddb Neuron" % int(N_Neuron))
+                create_folder(model_dir)
 
-        History = model.fit(train_data,train_labels,batch_size=bs,epochs=Epochs,
-                            callbacks=callbacks_list,validation_data=(test_data,test_labels))
+                callbacks_list = [keras.callbacks.EarlyStopping(monitor='val_loss',patience=Epochs),
+                            keras.callbacks.ModelCheckpoint(filepath = os.path.join(model_dir, "model.h5")
+                                                            ,monitor='val_loss',save_best_only=True),
+                                 keras.callbacks.ReduceLROnPlateau(monitor='val_loss',factor=0.98,patience=2)]
 
-        #####prediction
-        predicted_labels = model.predict(test_data)
-        predicted_labels = np.argmax(predicted_labels,axis=1)
+                History = model.fit(train_data,train_labels,batch_size=bs,epochs=Epochs,
+                                    validation_data=(test_data,test_labels))
 
-        Acc=0
-        for i in range(len(predicted_labels)):
-            if predicted_labels[i]==np.argmax(test_labels[i,:]):
-                Acc+=1
+                #####prediction
+               # predicted_labels = model.predict(test_data)
+               # predicted_labels = np.argmax(predicted_labels,axis=1)
 
-        Acc/=len(predicted_labels)
-        print('ACC of Model is : ',Acc)
+               # Acc=0
+               # for i in range(len(predicted_labels)):
+               #     if predicted_labels[i]==np.argmax(test_labels[i,:]):
+               #         Acc+=1
+
+                #Acc/=len(predicted_labels)
+                #print('ACC of Model is : ',Acc)
